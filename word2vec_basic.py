@@ -91,11 +91,14 @@ def build_dataset(words, n_words):
   data = list()
   unk_count = 0
   for word in words:
-    if word in dictionary:
-      index = dictionary[word]
-    else:
-      index = 0  # dictionary['UNK']
-      unk_count += 1
+    #if word in dictionary:
+     # index = dictionary[word]
+   # else:
+    #  index = 0  # dictionary['UNK']
+     # unk_count += 1
+    index = dictionary.get(word, 0)
+    if index == 0: #dictionary['UNK']
+         unk_count += 1
     data.append(index)
   count[0][1] = unk_count
   reversed_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
@@ -281,10 +284,10 @@ try:
   # pylint: disable=g-import-not-at-top
   from sklearn.manifold import TSNE
   import matplotlib.pyplot as plt
-
-  tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000, method='exact')
+  
+  tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000, method='barnes_hut')
   #MINDIG PONTOSAN ANNYI SZOT RAJZOL FEL AMENNYI A SZOTARBAN IS SZEREPEL
-  plot_only = len(reverse_dictionary)
+  plot_only = 500 #len(reverse_dictionary)
   low_dim_embs = tsne.fit_transform(final_embeddings[:plot_only, :])
   labels = [reverse_dictionary[i] for i in xrange(plot_only)]
   #plot_with_labels(low_dim_embs, labels)
@@ -295,8 +298,8 @@ except ImportError:
 #Step 7: SZOHALO RAJZOLAS
 
 wordGraph = Graph()
-wordGraph.add_vertices(len(reverse_dictionary)) #a szavak szamaval megegyezo mennyisegu pontot vesz fel a grafba
-wordGraph.vs["name"] = reverse_dictionary
+wordGraph.add_vertices(len(labels)) #a szavak szamaval megegyezo mennyisegu pontot vesz fel a grafba
+wordGraph.vs["name"] = labels
 wordGraph.vs["label"] = labels
 
 coordinates = [] #szavak koordinatait tarolja
@@ -318,12 +321,133 @@ points = np.array(coordinates)
 #print(points[56])
 
 #k-dimenzios faba rendezi a koordinatakat, amiben gyorsan kereshetoek a szomszedok
-points_tree = spatial.cKDTree(points)
+#points_tree = spatial.cKDTree(points)
 
-for i, idx in enumerate(labels):
-    x, y = points[i, :]
+wlen = len(labels)
+
+#for i, idx in enumerate(labels):
+ #   x, y = points[i, :]
     #points_tree.query_ball_point((x,y), 2)
-    wordGraph.add_edges(points_tree.query_pairs(2))  #osszeszedi azokat a pontokat, amik 2 tavolsagra vannak az adott ponttol-
+  #  wordGraph.add_edges(points_tree.query_pairs(2))  #osszeszedi azokat a pontokat, amik 2 tavolsagra vannak az adott ponttol
+    
+#labels.remove('UNK')
+
+#print(labels)
+#print duplicates
+
+seen = set()
+
+duplicates = []
+
+for i, itm in enumerate(reverse_dictionary):
+    if itm not in seen:
+        seen.add(itm)
+    else:
+        duplicates.append(itm)
+        
+#print duplicates
+
+for idx, word in enumerate(labels):
+    
+    if idx == 0:
+        if word in duplicates:
+            #print 'Found duplicate word'
+            k = labels.index(word)
+            wordGraph.add_edges([(labels[k], labels[idx+1])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx+1])
+            wordGraph.add_edges([(labels[k], labels[idx+2])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx+2])
+            
+        else:
+            wordGraph.add_edges([(word, labels[idx+1])])
+            #print 'Added edges between %s and %s' % (word, labels[idx+1])
+            wordGraph.add_edges([(word, labels[idx+2])])
+            #print 'Added edges between %s and %s' % (word, labels[idx+2])
+        
+    elif idx == 1:
+        if word in duplicates:
+            #print 'Found duplicate word'
+            k = labels.index(word)
+            wordGraph.add_edges([(labels[k], labels[idx-1])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx-1])
+            wordGraph.add_edges([(labels[k], labels[idx+1])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx+1])
+            wordGraph.add_edges([(labels[k], labels[idx+2])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx+2])
+        
+        else:
+            wordGraph.add_edges([(word, labels[idx-1])])
+            #print 'Added edges between %s and %s' % (word, labels[idx-1])
+            wordGraph.add_edges([(word, labels[idx+1])])
+            #print 'Added edges between %s and %s' % (word, labels[idx+1])
+            wordGraph.add_edges([(word, labels[idx+2])])
+            #print 'Added edges between %s and %s' % (word, labels[idx+2])
+        
+    elif idx == (wlen-2):
+        if word in duplicates:
+            #print 'Found duplicate word'
+            k = labels.index(word)
+            wordGraph.add_edges([(labels[k], labels[idx-2])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx-2])
+            wordGraph.add_edges([(labels[k], labels[idx-1])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx-1])
+            wordGraph.add_edges([(labels[k], labels[idx+1])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx+1])
+
+        
+        else:
+            wordGraph.add_edges([(word, labels[idx-2])])
+            #print 'Added edges between %s and %s' % (word, labels[idx-2])
+            wordGraph.add_edges([(word, labels[idx-1])])
+            #print 'Added edges between %s and %s' % (word, labels[idx-1])
+            wordGraph.add_edges([(word, labels[idx+1])])
+            #print 'Added edges between %s and %s' % (word, labels[idx+1])
+        
+    elif idx == (wlen-1):
+        if word in duplicates:
+            #print 'Found duplicate word'
+            k = labels.index(word)
+            wordGraph.add_edges([(labels[k], labels[idx-2])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx-2])
+            wordGraph.add_edges([(labels[k], labels[idx-1])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx-1])
+        
+        else:
+            wordGraph.add_edges([(word, labels[idx-2])])
+            #print 'Added edges between %s and %s' % (word, labels[idx-2])
+            wordGraph.add_edges([(word, labels[idx-1])])
+            #print 'Added edges between %s and %s' % (word, labels[idx-1])
+    
+    
+    else:
+        if word in duplicates:
+            #print 'Found duplicate word'
+            k = labels.index(word)
+            wordGraph.add_edges([(labels[k], labels[idx-2])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx-2])
+            wordGraph.add_edges([(labels[k], labels[idx-1])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx-1])
+            wordGraph.add_edges([(labels[k], labels[idx+1])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx+1])
+            wordGraph.add_edges([(labels[k], labels[idx+2])])
+            #print 'Added edges between %s and %s' % (labels[k], labels[idx+2])
+        
+        else:
+            wordGraph.add_edges([(word, labels[idx-2])])
+            #print 'Added edges between %s and %s' % (word, labels[idx-2])
+            wordGraph.add_edges([(word, labels[idx-1])])
+            #print 'Added edges between %s and %s' % (word, labels[idx-1])
+            wordGraph.add_edges([(word, labels[idx+1])])
+            #print 'Added edges between %s and %s' % (word, labels[idx+1])
+            wordGraph.add_edges([(word, labels[idx+2])])
+            #print 'Added edges between %s and %s' % (word, labels[idx+2])
+
+wordGraph=wordGraph.simplify()
+
+for v in wordGraph.vs:
+    if wordGraph.degree(v, ALL, True) == 0:
+        wordGraph.delete_vertices(v)
+
       
 #a graf egyszerusitese (korok es tobbszoros elek eltavolitasa)
 wordGraph=wordGraph.simplify()
@@ -333,4 +457,17 @@ wordGraph=wordGraph.simplify()
 #layout = wordGraph.layout_lgl()
 layout = Layout(coordinates)
 
-plot(wordGraph, "wordgraph.svg", layout = layout)
+betwn = wordGraph.betweenness()
+
+betwn[:] = [(5 + (x / 1000)) for x in betwn]
+
+visual_style = {}
+visual_style["vertex_size"] = betwn
+visual_style["vertex_label_size"] = 8
+#visual_style["vertex_label"] = wordGraph.vs["name"]
+visual_style["layout"] = layout
+visual_style["bbox"] = (2048, 2048)
+visual_style["margin"] = 30
+visual_style["vertex_label_angle"] = 0
+
+plot(wordGraph, "wordgraph.svg", **visual_style)
