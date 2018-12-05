@@ -420,6 +420,7 @@ trace2=go.Scatter3d(x=Xn,
                name='words',
                marker=dict(symbol='circle', size=betwn, color='#6959CD', line=dict(color='rgb(50,50,50)', width=0.5)),
                text = glabel,
+               #textposition = 'bottom'
                hoverinfo='text'
                )
 

@@ -1,0 +1,12 @@
+<!doctype html>
+<title>Wordgraph</title>
+<h1>Upload text file to process to visualize</h1>
+<form method=post enctype=multipart/form-data>
+<input type=file name=file>
+<input type=submit value=Upload>
+</form>
+<h1>Graph</h1>
+<div class="graph">
+    {% include 'output.html' %}
+</div>
+
