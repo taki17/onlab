@@ -396,13 +396,19 @@ for e in edges:
 #print(x_lines)
 #print(y_lines)
 #print(z_lines)
+
+betwn = wordGraph.betweenness()
+
+betwn[:] = [(5 + (x / 1000)) for x in betwn]
+
+print(betwn)
     
 #ez a trace rajzolja ki az eleket
 trace1=go.Scatter3d(x=x_lines,
                y=y_lines,
                z=z_lines,
                mode='lines',
-               line= dict(color='rgb(210,210,210)', width=2),
+               line= dict(color='rgb(210,210,210)', width=1),
                hoverinfo='none'
                )
 
@@ -411,11 +417,8 @@ trace2=go.Scatter3d(x=Xn,
                y=Yn,
                z=Zn,
                mode='markers',
-               marker=dict(symbol='circle',
-                                        size=5,
-                                        color='#6959CD',
-                                        line=dict(color='rgb(50,50,50)', width=0.5)
-                                        ),
+               name='words',
+               marker=dict(symbol='circle', size=betwn, color='#6959CD', line=dict(color='rgb(50,50,50)', width=0.5)),
                text = glabel,
                hoverinfo='text'
                )
